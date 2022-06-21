@@ -24,7 +24,6 @@ echo
 
 rm -rf "$DIST_PATH"
 mkdir -p "$DIST_PATH/.workspace"
-rm -rf "$DIST_PATH/.workspace/*"
 
 # Copy src to workspace and move to workspace
 
@@ -35,6 +34,7 @@ pushd ".workspace" > /dev/null
 # Move main job file
 
 echo "* Copying $JOB_SCRIPT as-is"
+
 mv "$JOB_SCRIPT" ..
 
 # Download external dependencies
@@ -47,31 +47,25 @@ then
     pipenv requirements > requirements.txt
 
     echo "Installing dependencies..."
-    pip install -q -r requirements.txt --no-deps -t .
+    python -m pip install -q -r requirements.txt --no-deps -t .
 else
     echo "No Pipfile found, assuming no external dependencies are being used."
 fi
 
 # Create Wheel Package
 
-echo "* Creting setup.py file"
-cat >setup.py <<EOL
+echo "* Creating Wheel package"
+
+read -r -d '' CMD <<EOF
 from setuptools import setup, find_namespace_packages
-import glob, os
+from glob import glob
+from os.path import basename, splitext
 
-# The the current filename without the extension.
-def get_current_py_module():
-    current_file_name = os.path.basename(__file__)
-    return os.path.splitext(current_file_name)[0]
-
-
-# Returns the filename of other .py files in the current directory without the extensions.
+# Returns the filename of all .py files in the current directory without their extensions.
 def find_py_modules():
-    cwd = os.getcwd()
-    file_paths = glob.glob(cwd + "/*.py")
-    file_names = [os.path.basename(file_path) for file_path in file_paths]
-    py_modules = [os.path.splitext(file_name)[0] for file_name in file_names]
-    py_modules.remove(get_current_py_module())
+    file_paths = glob("*.py")
+    file_names = [basename(file_path) for file_path in file_paths]
+    py_modules = [splitext(file_name)[0] for file_name in file_names]
     return py_modules
 
 setup(
@@ -79,13 +73,11 @@ setup(
     version="1.0",
     packages=find_namespace_packages(),
     py_modules=find_py_modules(),
+    setup_requires=['wheel'],
 )
-EOL
+EOF
 
-echo "* Performing wheel setup"
-python setup.py bdist_wheel
-echo "* Moving wheel files out of workspace"
-mv dist/* ..
+python -c "$CMD" -q bdist_wheel --dist-dir .. || exit 2
 
 # Cleanup
 
@@ -100,7 +92,7 @@ popd > /dev/null # out of $DIST_PATH
 echo
 echo "Packaging completed:"
 echo
-ls -1 $DIST_PATH/*
+ls -1 "$DIST_PATH"/*
 echo
 echo "You should now upload all files in $DIST_PATH to S3"
 echo

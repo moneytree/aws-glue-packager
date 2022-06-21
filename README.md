@@ -11,7 +11,7 @@ curl -O https://raw.githubusercontent.com/moneytree/aws-glue-packager/main/packa
 chmod +x package-glue-job.sh
 ```
 
-Then invoke it with the path to your Glue script's entry point (the initial .py file).
+Then invoke it with the path to your Glue script's entry point (the main .py file).
 The name of the directory in which this .py file exists will be used as the Job name,
 which only impacts the output folder's name.
 
@@ -23,21 +23,23 @@ The result will be contained inside a `./glue-dist/` directory.
 
 ## What does it package?
 
-Given a main python file it will create a wheel file which contain the following:
-- Pipfile dependencies from a Pipfile in the same directory as the main file.
-- Other python files in the same directory as the main file.
-- Any packages discoverable by [setuptools find_namespace_packages](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-namespace-packages) from the same directory as the main file.
+Given a main python file it will create a Wheel package file which contains the following:
 
-Afterwards it will create a wheel file with a name like `deps-1.0-py3-none-any.whl`, but this name may vary depending on the python version and platforms the dependencies support.
+- If a Pipfile is present in the main .py file's directory, its dependencies.
+- Other .py files from the main .py file's directory.
+- Any packages discoverable by [setuptools find_namespace_packages](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-namespace-packages) from the main .py file's directory.
+
+The Wheel package will have a filename like `deps-1.0-py3-none-any.whl`. This name will vary depending on the Python version
+and platforms your dependencies support.
 
 
-## Using wheel packages in AWS Glue jobs
-To use the package first upload it to S3. Then include the s3 url as a parameter to your glue job.
-The parameter is different depending on if the job is a python shell or a glue ETL job.
+## Using the Wheel package in your AWS Glue job
 
-**Python Shell Parameter:** `--extra-py-files`
+To use the package first upload it to S3. Then include the S3 object URI as a parameter to your Glue job.
+The parameter is different depending on the type of Glue job this is.
 
-**Glue ETL Parameter:** `--additional-python-modules`
+* If the job type is `pythonshell`, use `--extra-py-files`.
+* If the job type is `glueetl`, use `--additional-python-modules`.
 
 ## Disclaimer
 
