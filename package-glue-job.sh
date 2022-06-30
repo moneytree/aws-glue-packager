@@ -27,7 +27,10 @@ mkdir -p "$DIST_PATH/.workspace"
 
 # Copy src to workspace and move to workspace
 
-rsync -a -L "$JOB_DIR/" "$DIST_PATH/.workspace/"
+echo "* Copying source files from $JOB_DIR to $DIST_PATH/.workspace"
+
+cp -LR "$JOB_DIR/." "$DIST_PATH/.workspace/"
+
 pushd "$DIST_PATH" > /dev/null
 pushd ".workspace" > /dev/null
 
