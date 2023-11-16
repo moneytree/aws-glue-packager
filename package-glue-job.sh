@@ -38,7 +38,13 @@ pushd ".workspace" > /dev/null
 
 echo "* Copying $JOB_SCRIPT as-is"
 
-mv "$JOB_SCRIPT" ..
+mv -v "$JOB_SCRIPT" ..
+
+# Move .jar files
+
+echo "* Copying .jar files (if any)"
+
+find . -name '*.jar' -exec mv -v {} .. \;
 
 # Download external dependencies
 
